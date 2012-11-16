@@ -1,0 +1,10 @@
+<resources>
+
+    <string name="app_name">MTGJudge</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_main">MTGJudge App</string>
+    <string name="search_hint">Enter search (press Enter to search)</string>
+    <string name="homescreentext">MTGJudge App</string>
+	<string name="imagedescriptor">Image Placeholder</string>
+</resources>
