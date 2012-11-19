@@ -1,28 +1,10 @@
 package com.ndrue.gathereroffline;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.XmlResourceParser;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
@@ -40,12 +22,12 @@ import android.widget.Toast;
 public class ComprehensiveRules extends Activity {
 
 	private ArrayList<String> dataLines;
-	private ArrayList<String> listPop;
 	private ArrayList<String> corresponding;
 	private final String pid = "ComprehensiveRules";
 	private boolean searching = false;
 	private Context ct;
-
+	private LogCatcher logC;
+	
 	@Override
 	public void onCreate(Bundle b) {
 		super.onCreate(b);
@@ -56,6 +38,7 @@ public class ComprehensiveRules extends Activity {
 
 	private void initVar() {
 		// preload all data
+		logC = new LogCatcher();
 		loadData();
 		populateList();
 		setEvents();
@@ -63,6 +46,7 @@ public class ComprehensiveRules extends Activity {
 	}
 
 	private void setEvents() {
+		try {
 		ListView lV = (ListView) findViewById(R.id.listView1);
 		lV.setOnItemClickListener(new OnItemClickListener() {
 
@@ -101,9 +85,13 @@ public class ComprehensiveRules extends Activity {
 			}
 
 		});
+		} catch (Exception e) {
+			logC.write(e.getMessage());
+		}
 	}
 
 	private void findSearch(String f) {
+		try {
 		Log.w(pid, "Searching for: " + f);
 		DBAdapter dba = new DBAdapter(this, "ComprRules",
 				"idname,explaintext,parentid", "text,text,text");
@@ -137,9 +125,13 @@ public class ComprehensiveRules extends Activity {
 			itn.putExtras(b);
 			startActivity(itn);
 		}
+		} catch (Exception e) {
+			logC.write(e.getMessage());
+		}
 	}
 
 	private void loadNext(String header) {
+		try {
 		int pos = dataLines.indexOf(header);
 		Bundle b = new Bundle();
 		b.putString("from", "ComprRules");
@@ -147,32 +139,12 @@ public class ComprehensiveRules extends Activity {
 		Intent itn = new Intent(this, DisplayDetails.class);
 		itn.putExtras(b);
 		startActivity(itn);
+		} catch (Exception e) {
+			logC.write(e.getMessage());
+		}
 	}
 
 	private void populateList() {
-		// listPop = new ArrayList<String>();
-		// for (int i = 0; i < dataLines.size(); ++i) {
-		// if (dataLines.get(i).toLowerCase().equals("contents")) {
-		// int ctr = i + 1;
-		// boolean isHeader = false;
-		// while (true) {
-		// if (!dataLines.get(ctr).trim().toLowerCase()
-		// .equals("glossary")) {
-		// if (dataLines.get(ctr).trim().equals("")) {
-		// isHeader = false;
-		// } else {
-		// if (!isHeader) {
-		// isHeader = true;
-		// listPop.add(dataLines.get(ctr).trim());
-		// }
-		// }
-		// } else {
-		// break;
-		// }
-		// ++ctr;
-		// }
-		// }
-		// }
 		ListView lV;
 		ArrayAdapter<String> arrAdapter = new ArrayAdapter<String>(this,
 				R.layout.listview_item, dataLines);
@@ -180,7 +152,6 @@ public class ComprehensiveRules extends Activity {
 	}
 
 	private void loadData() {
-		// isExist();
 		try {
 			corresponding = new ArrayList<String>();
 			dataLines = new ArrayList<String>();
@@ -204,51 +175,8 @@ public class ComprehensiveRules extends Activity {
 					this,
 					"An error has occurred loading the file. Please try again.",
 					Toast.LENGTH_SHORT).show();
+			logC.write(e.getMessage());
 			finish();
-		}
-	}
-
-	private boolean fileExistance(String fname) {
-		File file = getBaseContext().getFileStreamPath(fname);
-		if (file.exists()) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	private void isExist() {
-		if (!fileExistance("ComprRules")) {
-			writeFileToInternalStorage();
-		}
-	}
-
-	private void writeFileToInternalStorage() {
-		String eol = System.getProperty("line.separator");
-		FileOutputStream writer = null;
-		try {
-			writer = openFileOutput("ComprRules", MODE_PRIVATE);
-			InputStream iS = getAssets().open("MagicCompRules.txt");
-			byte[] buffer = new byte[1024];
-			int length;
-			while ((length = iS.read(buffer)) > 0) {
-				writer.write(buffer, 0, length);
-			}
-			iS.close();
-			writer.flush();
-			writer.close();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {
-			if (writer != null) {
-				try {
-					writer.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
 		}
 	}
 }

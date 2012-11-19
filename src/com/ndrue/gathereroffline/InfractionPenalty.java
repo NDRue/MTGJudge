@@ -1,28 +1,10 @@
 package com.ndrue.gathereroffline;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.XmlResourceParser;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
@@ -40,7 +22,6 @@ import android.widget.Toast;
 public class InfractionPenalty extends Activity {
 
 	private ArrayList<String> dataLines;
-	private ArrayList<String> listPop;
 	private ArrayList<String> corresponding;
 	private final String pid = "InfractionPenalty";
 	private final String ptable = "IPGRules";
@@ -151,29 +132,6 @@ public class InfractionPenalty extends Activity {
 	}
 
 	private void populateList() {
-//		listPop = new ArrayList<String>();
-//		for (int i = 0; i < dataLines.size(); ++i) {
-//			if (dataLines.get(i).toLowerCase().equals("contents")) {
-//				int ctr = i + 1;
-//				boolean isHeader = false;
-//				while (true) {
-//					if (!dataLines.get(ctr).trim().toLowerCase()
-//							.equals("glossary")) {
-//						if (dataLines.get(ctr).trim().equals("")) {
-//							isHeader = false;
-//						} else {
-//							if (!isHeader) {
-//								isHeader = true;
-//								listPop.add(dataLines.get(ctr).trim());
-//							}
-//						}
-//					} else {
-//						break;
-//					}
-//					++ctr;
-//				}
-//			}
-//		}
 		ListView lV;
 		ArrayAdapter<String> arrAdapter = new ArrayAdapter<String>(this,
 				R.layout.listview_item, dataLines);
@@ -181,7 +139,6 @@ public class InfractionPenalty extends Activity {
 	}
 
 	private void loadData() {
-		//isExist();
 		try {
 			corresponding = new ArrayList<String>();
 			dataLines = new ArrayList<String>();
@@ -207,48 +164,4 @@ public class InfractionPenalty extends Activity {
 			finish();
 		}
 	}
-
-	private boolean fileExistance(String fname) {
-		File file = getBaseContext().getFileStreamPath(fname);
-		if (file.exists()) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-/*	private void isExist() {
-		if (!fileExistance("ComprRules")) {
-			writeFileToInternalStorage();
-		}
-	}*/
-
-/*	private void writeFileToInternalStorage() {
-		String eol = System.getProperty("line.separator");
-		FileOutputStream writer = null;
-		try {
-			writer = openFileOutput("ComprRules", MODE_PRIVATE);
-			InputStream iS = getAssets().open("MagicCompRules.txt");
-			byte[] buffer = new byte[1024];
-			int length;
-			while ((length = iS.read(buffer)) > 0) {
-				writer.write(buffer, 0, length);
-			}
-			iS.close();
-			writer.flush();
-			writer.close();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {
-			if (writer != null) {
-				try {
-					writer.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}
-	}*/
 }

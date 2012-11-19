@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -28,20 +27,21 @@ import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.AdapterView.OnItemClickListener;
 
 public class MiscOptions extends Activity {
 
 	private Context ct;
-	private static String DB_PATH = "/data/data/com.ndrue.gathereroffline/databases/";
+	private static String DB_PATH = "";
 	private static String DB_NAME = "GathererOfflineDB.s3db";
 
 	private AlertDialog.Builder alert;
@@ -61,6 +61,7 @@ public class MiscOptions extends Activity {
 		super.onCreate(b);
 		setContentView(R.layout.homescreen);
 		ct = this;
+		DB_PATH = ct.getDatabasePath(DB_NAME).getAbsolutePath();
 		initVar();
 	}
 
@@ -250,13 +251,13 @@ public class MiscOptions extends Activity {
 					int fileLength = connection.getContentLength();
 
 					// download the file
-					File toCreateDir = new File("/sdcard/mtgjudge/");
+					File toCreateDir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge/");
 					// have the object build the directory structure, if needed.
 					toCreateDir.mkdirs();
 					InputStream input = new BufferedInputStream(
 							url.openStream());
 					OutputStream output = new FileOutputStream(
-							"/sdcard/mtgjudge/tempdatabase.data");
+							Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge/tempdatabase.data");
 
 					byte data[] = new byte[1024];
 					long total = 0;
@@ -272,13 +273,13 @@ public class MiscOptions extends Activity {
 					output.close();
 					input.close();
 
-					String outFileName = DB_PATH + DB_NAME;
+					String outFileName = DB_PATH;// + DB_NAME;
 					// Open the empty db as the output stream
 					OutputStream myOutput = new FileOutputStream(outFileName);
 					// transfer bytes from the inputfile to the outputfile
 					InputStream myInput = new BufferedInputStream(
 							new FileInputStream(
-									"/sdcard/mtgjudge/tempdatabase.data"));
+									Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge/tempdatabase.data"));
 					byte[] buffer = new byte[1024];
 					int length;
 					while ((length = myInput.read(buffer)) > 0) {
@@ -289,7 +290,7 @@ public class MiscOptions extends Activity {
 					// Close the streams
 					myOutput.flush();
 					myOutput.close();
-					deleteDirectory(new File("/sdcard/mtgjudge"));
+					deleteDirectory(new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge"));
 				} catch (Exception e) {
 					e.printStackTrace();
 					return "ERROR";

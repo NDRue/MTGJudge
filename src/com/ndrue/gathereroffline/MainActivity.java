@@ -3,22 +3,19 @@ package com.ndrue.gathereroffline;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import android.os.AsyncTask;
-import android.os.Bundle;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteStatement;
+import android.os.AsyncTask;
+import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.View.OnKeyListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -27,10 +24,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.support.v4.app.NavUtils;
 
 public class MainActivity extends Activity {
 
@@ -46,6 +41,7 @@ public class MainActivity extends Activity {
 	private boolean updateLocked = false;
 	private boolean timeoutTrue = false;
 	private boolean searchwaitRunning = false;
+	private LogCatcher logC;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -143,6 +139,7 @@ public class MainActivity extends Activity {
 
 	private void initVar() {
 		// Add listener for text change
+		logC = new LogCatcher();
 		arrList = new ArrayList<String>();
 		arrAdapter = new ArrayAdapter<String>(ct, R.layout.listview_item,
 				arrList);
@@ -291,7 +288,7 @@ public class MainActivity extends Activity {
 	}
 
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
+		try {
 		if (requestCode == 1) {
 
 			// if (resultCode == RESULT_OK) {
@@ -305,6 +302,10 @@ public class MainActivity extends Activity {
 			// // Write your code on no result return
 			//
 			// }
+		}
+		} catch (Exception e) {
+			String toDebug = e.getMessage();
+			logC.write(toDebug);
 		}
 	}
 }

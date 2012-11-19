@@ -15,7 +15,7 @@ import android.util.Log;
 
 public class DataBaseHelper extends SQLiteOpenHelper {
 
-	private static String DB_PATH = "/data/data/com.ndrue.gathereroffline/databases/";
+	private static String DB_PATH = "";
 	private static String DB_NAME = "GathererOfflineDB.s3db";
 	private SQLiteDatabase myDataBase;
 	private final Context myContext;
@@ -28,6 +28,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 	 */
 	public DataBaseHelper(Context context) {
 		super(context, DB_NAME, null, 1);
+		DB_PATH = context.getDatabasePath(DB_NAME).getAbsolutePath();
 		this.myContext = context;
 	}
 
@@ -38,7 +39,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 	public void createDataBase() throws IOException {
 
 		boolean dbExist = checkDataBase();
-		Log.i("CopyDB", "DBExist: " + dbExist);
+		Log.i("CopyDB", "DBExist: " + dbExist + " for " + DB_PATH);
 		if (dbExist) {
 			checkIfValid();
 			// do nothing - database already exist
@@ -93,7 +94,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 	private boolean checkDataBase() {
 		SQLiteDatabase checkDB = null;
 		try {
-			String myPath = DB_PATH + DB_NAME;
+			String myPath = DB_PATH;// + DB_NAME;
 			checkDB = SQLiteDatabase.openDatabase(myPath, null,
 					SQLiteDatabase.OPEN_READONLY);
 		} catch (SQLiteException e) {
@@ -114,7 +115,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 		// Open your local db as the input stream
 		Log.i("CopyDB", "Copying database...");
 		// Path to the just created empty db
-		String outFileName = DB_PATH + DB_NAME;
+		String outFileName = DB_PATH;// + DB_NAME;
 		// Open the empty db as the output stream
 		OutputStream myOutput = new FileOutputStream(outFileName);
 		// transfer bytes from the inputfile to the outputfile
@@ -136,7 +137,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
 	public void openDataBase() throws SQLException {
 		// Open the database
-		String myPath = DB_PATH + DB_NAME;
+		String myPath = DB_PATH;// + DB_NAME;
 		myDataBase = SQLiteDatabase.openDatabase(myPath, null,
 				SQLiteDatabase.OPEN_READONLY);
 	}

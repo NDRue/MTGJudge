@@ -2,23 +2,12 @@ package com.ndrue.gathereroffline;
 
 import java.io.IOException;
 
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.app.Activity;
-import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.content.res.XmlResourceParser;
-import android.database.Cursor;
 import android.database.SQLException;
-import android.database.sqlite.SQLiteStatement;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 public class InitCardData extends Activity {
 
