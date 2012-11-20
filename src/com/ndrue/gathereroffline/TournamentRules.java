@@ -94,7 +94,7 @@ public class TournamentRules extends Activity {
 				"explaintext", "parentid", "id" },
 				"explaintext LIKE ? AND (idname = '' OR idname IS NULL)",
 				new String[] { "%" + f + "%" }, null, null, "id", -1);
-		startManagingCursor(c);
+		//startManagingCursor(c);
 		ArrayList<String> findResults = new ArrayList<String>();
 		if (c.moveToFirst()) {
 			do {
@@ -148,7 +148,7 @@ public class TournamentRules extends Activity {
 			dba.open();
 			Cursor c = dba.query(ptable, new String[] { "idname",
 					"explaintext", "id" }, "parentid = '' OR parentid IS NULL", null, null, null, "id", -1);
-			startManagingCursor(c);
+			//startManagingCursor(c);
 			if (c.moveToFirst()) {
 				do {
 					dataLines.add(c.getString(1));

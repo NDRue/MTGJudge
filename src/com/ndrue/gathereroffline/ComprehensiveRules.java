@@ -100,7 +100,7 @@ public class ComprehensiveRules extends Activity {
 				"explaintext", "parentid", "id" },
 				"explaintext LIKE ? AND (idname = '' OR idname IS NULL)",
 				new String[] { "%" + f + "%" }, null, null, "id", -1);
-		startManagingCursor(c);
+		//startManagingCursor(c);
 		ArrayList<String> findResults = new ArrayList<String>();
 		if (c.moveToFirst()) {
 			do {
@@ -161,7 +161,7 @@ public class ComprehensiveRules extends Activity {
 			Cursor c = dba.query("ComprRules", new String[] { "idname",
 					"explaintext", "id" }, "parentid = '' OR parentid IS NULL",
 					null, null, null, "id", -1);
-			startManagingCursor(c);
+			//startManagingCursor(c);
 			if (c.moveToFirst()) {
 				do {
 					dataLines.add(c.getString(1));

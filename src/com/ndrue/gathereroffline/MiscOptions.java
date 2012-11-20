@@ -125,7 +125,7 @@ public class MiscOptions extends Activity {
 			try {
 				c = dba.query("MiscOpt", "optvalue", "optname = ?",
 						new String[] { "updatesite" });
-				startManagingCursor(c);
+				//startManagingCursor(c);
 			} catch (Exception e) {
 				crashed = true;
 			}
@@ -179,7 +179,7 @@ public class MiscOptions extends Activity {
 				c = dba.query("MiscOpt", "COUNT(*)",
 						"optname = ? AND optvalue < ?", new String[] {
 								"lastdt", getDetails[0] });
-				startManagingCursor(c);
+				//startManagingCursor(c);
 				c.moveToFirst();
 				int getCt = c.getInt(0);
 				Log.w(pid, "Got count: " + getCt);

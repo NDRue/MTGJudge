@@ -49,9 +49,14 @@ public class ShowCardDetails extends Activity{
 				"text,text,text,text,text,text");
 		dba.open();
 		Cursor c = dba.query("GathererCards", new String[] { "cname","ccost","ctype","cpowert","crules","csetrare" }, "cname = ?", new String[] { cname } );
-		startManagingCursor(c);
+		//startManagingCursor(c);
 		if(c.moveToFirst()) {
 			if(c.getCount()!=1) {
+				try {
+					c.close();
+				} catch (Exception e) {
+					Log.w(pid, e.getMessage());
+				}
 				Toast.makeText(this, "An error has occurred retrieving the card's details. Please try again.", Toast.LENGTH_SHORT).show();
 				dba.close();
 				finish();
