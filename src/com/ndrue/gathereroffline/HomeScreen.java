@@ -23,7 +23,7 @@ public class HomeScreen extends Activity {
 			"Types of Information", "Head Judge Announcement",
 			"Reviews / Feedback", "Oracle", "Decklist Counter",
 			"Comprehensive Rules", "Infraction Procedure Guide",
-			"Magic Tournament Rules", "Miscellaneous Options" };
+			"Magic Tournament Rules", "Add On", "Miscellaneous Options" };
 	private Context ct;
 	private LogCatcher logC;
 
@@ -121,6 +121,10 @@ public class HomeScreen extends Activity {
 				startActivity(reUsable);
 				break;
 			case 11:
+				reUsable = new Intent(ct, ExtraAddOns.class);
+				startActivity(reUsable);
+				break;
+			case 12:
 				reUsable = new Intent(ct, MiscOptions.class);
 				startActivity(reUsable);
 				break;

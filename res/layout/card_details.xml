@@ -21,7 +21,23 @@
                 android:layout_gravity="center"
                 android:text="Back"
                 android:visibility="gone" />
-            
+
+                <ImageView
+                    android:id="@+id/cardImage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/blackrounded"
+                	android:layout_gravity="center"
+                    android:visibility="gone" />
+            <Button
+                android:id="@+id/downloadImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Download image from Gatherer"
+                android:paddingLeft="25dp"
+                android:paddingRight="25dp" />
+                
     <TextView
         android:id="@+id/carddetails"
         android:layout_width="match_parent"
@@ -29,7 +45,7 @@
         android:text="TextView"
         android:layout_marginTop="5dp" 
         android:layout_marginBottom="5dp"/>
-
+                
             <Button
                 android:id="@+id/backbutton2"
                 android:layout_width="wrap_content"

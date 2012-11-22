@@ -16,7 +16,7 @@ public class LogCatcher {
 	//private static String DB_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + "data/com.ndrue.gathereroffline/database/";
 	
 	public void write(String s) {
-		File toCreateDir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudgelog/");
+		/*File toCreateDir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudgelog/");
 		// have the object build the directory structure, if needed.
 		toCreateDir.mkdir();
 		if(toCreateDir.canWrite()) {
@@ -32,7 +32,7 @@ public class LogCatcher {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
+		}*/
 	}
 	
 }

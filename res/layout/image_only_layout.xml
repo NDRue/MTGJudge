@@ -1,16 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:gravity="top" >
+
+    <ScrollView
+        android:id="@+id/scrollView1"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
         android:layout_gravity="top"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
-
-        <ImageView
-            android:scaleType="centerInside"
-            android:id="@+id/imageViewHolder"
-            android:layout_width="match_parent"
+        android:gravity="top"
+        android:padding="0dp" >
+
+        <LinearLayout
+            android:id="@+id/imageLayout"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top"
-            android:contentDescription="@string/imagedescriptor"
-            android:src="@drawable/penalties_guide" />
+            android:gravity="top" >
 
-    </LinearLayout>
+            <!--  com.ndrue.gathereroffline.ZoomImageView
+                android:id="@+id/imageViewHolder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:src="@drawable/penalties_guide" />
+            
+            
+            <ImageView
+                android:id="@+id/imageViewHolder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:layout_margin="0dp"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/imagedescriptor"
+                android:scaleType="centerInside"
+                android:src="@drawable/penalties_guide" / -->
+        </LinearLayout>
+    </ScrollView>
+
+    <ZoomButton
+        android:id="@+id/zoomButton1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:background="#AACCCCCC"
+        android:src="@android:drawable/btn_plus" />
+    <!--  Button
+        android:id="@+id/zoomToggle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Zoom In"
+        android:background="#AACCCCCC"
+        android:padding="10dp" / -->
+
+</RelativeLayout>

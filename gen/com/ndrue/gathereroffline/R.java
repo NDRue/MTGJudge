@@ -28,30 +28,33 @@ public final class R {
         public static final int reviewfeedback=0x7f020009;
     }
     public static final class id {
-        public static final int addfourbutton=0x7f09000e;
-        public static final int addonebutton=0x7f09000b;
-        public static final int addthreebutton=0x7f09000d;
-        public static final int addtwobutton=0x7f09000c;
+        public static final int addfourbutton=0x7f090010;
+        public static final int addonebutton=0x7f09000d;
+        public static final int addthreebutton=0x7f09000f;
+        public static final int addtwobutton=0x7f09000e;
         public static final int backbutton1=0x7f090006;
-        public static final int backbutton2=0x7f090008;
-        public static final int carddetails=0x7f090007;
-        public static final int comprmainview=0x7f090009;
-        public static final int deckCount=0x7f09000a;
+        public static final int backbutton2=0x7f09000a;
+        public static final int cardImage=0x7f090007;
+        public static final int carddetails=0x7f090009;
+        public static final int comprmainview=0x7f09000b;
+        public static final int deckCount=0x7f09000c;
+        public static final int downloadImage=0x7f090008;
         public static final int editText1=0x7f090000;
-        public static final int homescreenoptions=0x7f090013;
-        public static final int imageView1=0x7f090011;
-        public static final int imageViewHolder=0x7f090014;
+        public static final int homescreenoptions=0x7f090015;
+        public static final int imageLayout=0x7f090016;
+        public static final int imageView1=0x7f090013;
         public static final int infoprogressbar=0x7f090002;
         public static final int infotextview=0x7f090003;
         public static final int infoviewbar=0x7f090001;
         public static final int listView1=0x7f090004;
-        public static final int menu_settings=0x7f090017;
-        public static final int name_entry=0x7f090015;
-        public static final int resetbutton=0x7f09000f;
+        public static final int menu_settings=0x7f09001a;
+        public static final int name_entry=0x7f090018;
+        public static final int resetbutton=0x7f090011;
         public static final int scrollView1=0x7f090005;
-        public static final int textData=0x7f090016;
-        public static final int textView1=0x7f090012;
-        public static final int undobutton=0x7f090010;
+        public static final int textData=0x7f090019;
+        public static final int textView1=0x7f090014;
+        public static final int undobutton=0x7f090012;
+        public static final int zoomButton1=0x7f090017;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;
