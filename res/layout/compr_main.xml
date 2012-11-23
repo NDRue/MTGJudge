@@ -1,0 +1,56 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:descendantFocusability="beforeDescendants"
+	android:focusableInTouchMode="true"
+	android:id="@+id/comprmainview" >
+    <EditText
+        android:id="@+id/editText1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:background="@drawable/blackrounded"
+        android:ems="10"
+        android:hint="@string/search_hint"
+        android:padding="15dp"
+        android:singleLine="true"
+        android:text=""
+        android:textColor="#ffffff"
+        android:textSize="20dp" >
+    </EditText>
+
+    <LinearLayout
+        android:id="@+id/infoviewbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/editText1"
+        android:padding="10dp"
+        android:visibility="gone">
+    <ProgressBar
+        android:id="@+id/infoprogressbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/infotextview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:text=""
+        android:textSize="24dp"
+        android:layout_marginLeft="5dp" />
+
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/listView1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/infoviewbar" >
+    </ListView>
+
+</RelativeLayout>
