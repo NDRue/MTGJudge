@@ -28,6 +28,8 @@ public class DisplayDetails extends Activity {
 	private final String nl = System.getProperty("line.separator");
 	private String tblName = "";
 	private String pid = "";
+	private String isSearch = null;
+	private String searchStr = "";
 
 	@Override
 	public void onCreate(Bundle b) {
@@ -59,14 +61,58 @@ public class DisplayDetails extends Activity {
 		@Override
 		protected String doInBackground(String... arg0) {
 			// TODO Auto-generated method stub
-			for (int i = 0; i < dataLines.size(); ++i) {
-				tVData = tVData + (!tVData.equals("") ? (nl + nl) : "")
-						+ dataLines.get(i).replace("\n", nl);
-				while (blocked) {
-					// do nothing
+			// if is search
+			Log.d(pid, "Entered displaydata: " + (isSearch == null));
+			if (isSearch != null) {
+				Log.d(pid, "Searching for: " + searchStr);
+				String para = "";
+				boolean noSearch = true;
+				for (int i = 0; i < dataLines.size(); ++i) {
+					if (dataLines.get(i).contains(searchStr)) {
+						noSearch = false;
+						tVData = tVData + (!tVData.equals("") ? (nl + nl) : "")
+								+ dataLines.get(i).replace("\n", nl);
+						publishProgress("");
+					}
+					// Log.d(pid, "Get dataline: (" + i + "): " +
+					// dataLines.get(i));
+					// Log.d(pid, "Get dataline: (" + i + "): Is Blank: "
+					// + dataLines.get(i).trim().equals(""));
+					/*
+					 * if (dataLines.get(i).trim().equals("") || i == 0) { if
+					 * (para.equals("")) { int startInt = 0; if (i > 0) {
+					 * startInt = i + 1; } Log.d(pid, "Para is blank. Adding:");
+					 * for (int j = startInt; j < dataLines.size(); ++j) { if
+					 * (dataLines.get(j).trim().equals("")) { i = j + 1; j =
+					 * dataLines.size(); } else { para = para +
+					 * (!para.equals("") ? nl : "") + dataLines.get(j)
+					 * .replace("\n", nl); Log.d(pid, dataLines.get(j)); } } if
+					 * (!para.equals("")) { Log.d(pid, "Para contains search? "
+					 * + para.contains(searchStr)); if
+					 * (para.contains(searchStr)) { tVData = tVData +
+					 * (!tVData.equals("") ? (nl + nl) : "") +
+					 * para.replace("\n", nl); publishProgress(""); } para = "";
+					 * } } }
+					 */
 				}
-				blocked = true;
-				publishProgress("");
+				if (noSearch) {
+					for (int i = 0; i < dataLines.size(); ++i) {
+						noSearch = false;
+						tVData = tVData + (!tVData.equals("") ? (nl + nl) : "")
+								+ dataLines.get(i).replace("\n", nl);
+						publishProgress("");
+					}
+				}
+			} else {
+				for (int i = 0; i < dataLines.size(); ++i) {
+					tVData = tVData + (!tVData.equals("") ? (nl + nl) : "")
+							+ dataLines.get(i).replace("\n", nl);
+					while (blocked) {
+						// do nothing
+					}
+					blocked = true;
+					publishProgress("");
+				}
 			}
 			return null;
 		}
@@ -88,6 +134,10 @@ public class DisplayDetails extends Activity {
 			String connectorHead = "parentid";
 			String connector = " = ";
 			String connectorVar = "?";
+			if (b.containsKey("isSearch")) {
+				isSearch = "Y";
+				searchStr = b.getString("searchStr");
+			}
 			dataLines = new ArrayList<String>();
 			corresponding = new ArrayList<String>();
 			tblName = b.getString("from");
@@ -117,19 +167,31 @@ public class DisplayDetails extends Activity {
 			Cursor c = dba.query(tblName, new String[] { "idname",
 					"explaintext", "id" }, connectorHead + connector
 					+ connectorVar, toSearchVal, null, null, "id", -1);
+			Log.d(pid, "Connectors: " + connectorHead + connector
+					+ connectorVar);
+			for (int i = 0; i < toSearchVal.length; ++i) {
+				Log.d(pid, "ToSearchVal (" + i + "): " + toSearchVal[i]);
+			}
+			Log.d(pid, "Lowest level now: " + lowestLevel);
 			if (c.moveToFirst()) {
 				do {
 					dataLines.add(c.getString(1));
 					corresponding.add(c.getString(0));
+					Log.d(pid, "Lowest Level check: " + c.getString(1) + ", "
+							+ c.getString(0) + ", " + c.getString(0).length());
 					if (c.getString(0) == null) {
+						Log.d(pid, "Lowest level because getString is null");
 						lowestLevel = true;
 					} else {
 						if (c.getString(0).length() <= 0) {
+							Log.d(pid,
+									"Lowest level because getString length is 0");
 							lowestLevel = true;
 						}
 					}
 				} while (c.moveToNext());
 			}
+			Log.d(pid, "Lowest level after: " + lowestLevel);
 			c.close();
 			dba.close();
 		} catch (Exception e) {
@@ -158,6 +220,10 @@ public class DisplayDetails extends Activity {
 		Bundle b = new Bundle();
 		b.putString("from", tblName);
 		b.putString("parent", corresponding.get(pos));
+		if (isSearch != null) {
+			b.putString("isSearch", "Y");
+			b.putString("searchStr", searchStr);
+		}
 		Log.w(pid, "Sending: " + corresponding.get(pos));
 		Intent itn = new Intent(this, DisplayDetails.class);
 		itn.putExtras(b);

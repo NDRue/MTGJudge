@@ -22,6 +22,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
@@ -37,60 +39,100 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class ShowCardDetails extends Activity{
-	
+public class ShowCardDetails extends Activity {
+
 	private String cname = "";
-	private final String nl = System.getProperty ("line.separator");
+	private final String nl = System.getProperty("line.separator");
 	private final String pid = "ShowCardDetails";
 	private String cardID = "";
 	private String cardName = "";
 	private String castCost = "";
 	private Context ct;
 	private String responseString = "";
-	
+	private getHTTPAsync getHAsync = null;
+	private saveImageAsync getImgAsync = null;
+	private String multiverseID = "";
+	private int multiverseIDInt = 0;
+
 	@Override
 	public void onCreate(Bundle b) {
 		super.onCreate(b);
 		setContentView(R.layout.card_details);
 		ct = this;
-		Button btn = (Button)findViewById(R.id.backbutton1);
+		Button btn = (Button) findViewById(R.id.backbutton1);
 		btn.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
 				exitDetails();
 			}
-			
+
 		});
-		btn = (Button)findViewById(R.id.backbutton2);
+		btn = (Button) findViewById(R.id.backbutton2);
 		btn.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
 				exitDetails();
 			}
-			
+
 		});
 		cname = getIntent().getExtras().getString("searchquery");
-		Log.w(pid, "Got card name: " + cname);
-		if(cname.length()<3) {
-			Toast.makeText(this, "An error has occurred retrieving the card's details. Please try again.", Toast.LENGTH_SHORT).show();
+		multiverseID = getIntent().getExtras().getString("multiverseid");
+		String[] mIDarr = multiverseID.split("//");
+		//multiverseIDInt
+		for(int i=0;i<mIDarr.length;++i) {
+			String[] furtherSplit = mIDarr[i].split(" ");
+			if(multiverseIDInt<Integer.parseInt(furtherSplit[(furtherSplit.length-1)])) {
+				multiverseIDInt = Integer.parseInt(furtherSplit[(furtherSplit.length-1)]);
+			}
+		}
+		Log.w(pid, "Got card name: " + cname + " (" + multiverseID + " / " + multiverseIDInt + ")");
+		if (cname.length() < 3) {
+			Toast.makeText(
+					this,
+					"An error has occurred retrieving the card's details. Please try again.",
+					Toast.LENGTH_SHORT).show();
 			finish();
 		}
 		DBAdapter dba = new DBAdapter(this, "GathererCards",
 				"cname,ccost,ctype,cpowert,crules,csetrare",
 				"text,text,text,text,text,text");
 		dba.open();
-		Cursor c = dba.query("GathererCards", new String[] { "cname","ccost","ctype","cpowert","crules","csetrare","uid" }, "cname = ?", new String[] { cname } );
-		//startManagingCursor(c);
-		if(c.moveToFirst()) {
-			if(c.getCount()!=1) {
+		Cursor c = dba.query("GathererCards", new String[] { "cname", "ccost",
+					"ctype", "cpowert", "crules", "csetrare", "uid", "multiverse" }, "multiverse = ?",
+					new String[] { multiverseID });
+		// startManagingCursor(c);
+		if (c.moveToFirst()) {
+			if(c.getCount()>1) {
+				c.close();
+				c = dba.query("GathererCards", new String[] { "cname", "ccost",
+						"ctype", "cpowert", "crules", "csetrare", "uid", "multiverse" }, "multiverse = ? AND cname = ?",
+						new String[] { multiverseID, cname });
+				if(!c.moveToFirst()) {
+					try {
+						c.close();
+					} catch (Exception e) {
+						Log.w(pid, e.toString());
+					}
+					dba.close();
+					Toast.makeText(
+							this,
+							"An error has occurred retrieving the card's details. Please try again.",
+							Toast.LENGTH_SHORT).show();
+					finish();
+				}
+			}
+			if (c.getCount() != 1) {
 				try {
 					c.close();
 				} catch (Exception e) {
 					Log.w(pid, e.getMessage());
 				}
-				Toast.makeText(this, "An error has occurred retrieving the card's details. Please try again.", Toast.LENGTH_SHORT).show();
+				Toast.makeText(
+						this,
+						"An error has occurred retrieving the card's details. Please try again.",
+						Toast.LENGTH_SHORT).show();
 				dba.close();
 				finish();
 			} else {
@@ -98,24 +140,41 @@ public class ShowCardDetails extends Activity{
 				String toDisp = "";
 				cardName = c.getString(c.getColumnIndex("cname"));
 				castCost = c.getString(c.getColumnIndex("ccost"));
-				toDisp = "Card name:" + nl;
-				toDisp = toDisp + c.getString(c.getColumnIndex("cname")) + nl + nl;
-				toDisp = toDisp + "Casting cost:" + nl;
-				toDisp = toDisp + c.getString(c.getColumnIndex("ccost")) + nl + nl;
-				toDisp = toDisp + "Card type:" + nl;
-				toDisp = toDisp + c.getString(c.getColumnIndex("ctype")) + nl + nl;
-				toDisp = toDisp + "Card text:" + nl;
-				toDisp = toDisp + c.getString(c.getColumnIndex("crules")).replace("\n", nl) + nl + nl;
+				//toDisp = "Card name:" + nl;
+				toDisp = toDisp + c.getString(c.getColumnIndex("cname")) + nl
+						+ nl;
+				//toDisp = toDisp + "Casting cost:" + nl;
+				toDisp = toDisp + c.getString(c.getColumnIndex("ccost")) + nl
+						+ nl;
+				//toDisp = toDisp + "Card type:" + nl;
+				toDisp = toDisp + c.getString(c.getColumnIndex("ctype")) + nl
+						+ nl;
+				//toDisp = toDisp + "Card text:" + nl;
+				toDisp = toDisp
+						+ c.getString(c.getColumnIndex("crules")).replace("\n",
+								nl) + nl + nl;
 				String powert = c.getString(c.getColumnIndex("cpowert"));
-				if(!powert.equals("N/A")) {
+				if (!powert.equals("N/A")) {
 					toDisp = toDisp + powert + nl + nl;
 				}
-				toDisp = toDisp + "Set(s) / Rarity:" + nl;
+				//toDisp = toDisp + "Set(s) / Rarity:" + nl;
 				toDisp = toDisp + c.getString(c.getColumnIndex("csetrare"));
-				((TextView)findViewById(R.id.carddetails)).setText(toDisp);
+				((TextView) findViewById(R.id.carddetails)).setText(toDisp);
 				dba.close();
 				getCardImage();
 			}
+		} else {
+			try {
+				c.close();
+			} catch (Exception e) {
+				Log.w(pid, e.toString());
+			}
+			dba.close();
+			Toast.makeText(
+					this,
+					"An error has occurred retrieving the card's details. Please try again.",
+					Toast.LENGTH_SHORT).show();
+			finish();
 		}
 		try {
 			c.close();
@@ -123,88 +182,110 @@ public class ShowCardDetails extends Activity{
 			Log.w(pid, e.toString());
 		}
 		dba.close();
-		btn = (Button)findViewById(R.id.downloadImage);
+		btn = (Button) findViewById(R.id.downloadImage);
 		btn.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View arg0) {
 				// TODO Auto-generated method stub
 				downloadImage();
 			}
-			
+
 		});
 	}
-	
+
 	private void getCardImage() {
-		/*File toCreateDir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudgelog/");
-		// have the object build the directory structure, if needed.
-		toCreateDir.mkdir();
-		if(toCreateDir.canWrite()) {
-			try {
-				OutputStream oS = new FileOutputStream(Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudgelog/logfile.txt");
-				oS.write(s.getBytes());
-				oS.flush();
-				oS.close();
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}*/
-		File toCreateDir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge/images/");
-		if(toCreateDir.exists()) {
-			File toGetFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge/images/" + cardID + ".jpg");
-			if(toGetFile.exists()) {
-				((Button)findViewById(R.id.downloadImage)).setVisibility(View.GONE);
+		/*
+		 * File toCreateDir = new
+		 * File(Environment.getExternalStorageDirectory().getAbsolutePath() +
+		 * "/mtgjudgelog/"); // have the object build the directory structure,
+		 * if needed. toCreateDir.mkdir(); if(toCreateDir.canWrite()) { try {
+		 * OutputStream oS = new
+		 * FileOutputStream(Environment.getExternalStorageDirectory
+		 * ().getAbsolutePath() + "/mtgjudgelog/logfile.txt");
+		 * oS.write(s.getBytes()); oS.flush(); oS.close(); } catch
+		 * (FileNotFoundException e) { // TODO Auto-generated catch block
+		 * e.printStackTrace(); } catch (IOException e) { // TODO Auto-generated
+		 * catch block e.printStackTrace(); } }
+		 */
+		File toCreateDir = new File(Environment.getExternalStorageDirectory()
+				.getAbsolutePath() + "/mtgjudge/images/");
+		if (toCreateDir.exists()) {
+			File toGetFile = new File(Environment.getExternalStorageDirectory()
+					.getAbsolutePath() + "/mtgjudge/images/" + multiverseIDInt + ".jpg");
+			if (toGetFile.exists()) {
+				((Button) findViewById(R.id.downloadImage))
+						.setVisibility(View.GONE);
 				ImageView iV;
-				iV = (ImageView)findViewById(R.id.cardImage);
+				iV = (ImageView) findViewById(R.id.cardImage);
 				iV.setVisibility(View.VISIBLE);
-				iV.setImageBitmap(BitmapFactory.decodeFile(Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge/images/" + cardID + ".jpg"));
+				iV.setImageBitmap(BitmapFactory.decodeFile(Environment
+						.getExternalStorageDirectory().getAbsolutePath()
+						+ "/mtgjudge/images/" + multiverseIDInt + ".jpg"));
 				iV.setOnClickListener(new OnClickListener() {
 
 					public void onClick(View arg0) {
 						// TODO Auto-generated method stub
 						Intent imageItn = new Intent(ct, ImageOnly.class);
-						imageItn.putExtra("imagefile", Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge/images/" + cardID + ".jpg");
+						imageItn.putExtra("imagefile", Environment
+								.getExternalStorageDirectory()
+								.getAbsolutePath()
+								+ "/mtgjudge/images/" + multiverseIDInt + ".jpg");
 						startActivity(imageItn);
 					}
-					
+
 				});
 			}
 		}
 	}
-	
+
 	private void downloadImage() {
 		boolean mExternalStorageAvailable = false;
 		boolean mExternalStorageWriteable = false;
 		String state = Environment.getExternalStorageState();
 
 		if (Environment.MEDIA_MOUNTED.equals(state)) {
-		    // We can read and write the media
-		    mExternalStorageAvailable = mExternalStorageWriteable = true;
+			// We can read and write the media
+			mExternalStorageAvailable = mExternalStorageWriteable = true;
 		} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-		    // We can only read the media
-		    mExternalStorageAvailable = true;
-		    mExternalStorageWriteable = false;
+			// We can only read the media
+			mExternalStorageAvailable = true;
+			mExternalStorageWriteable = false;
 		} else {
-		    // Something else is wrong. It may be one of many other states, but all we need
-		    //  to know is we can neither read nor write
-		    mExternalStorageAvailable = mExternalStorageWriteable = false;
-		}	
-		
-		if(!mExternalStorageWriteable) {
-			Toast.makeText(ct, "Error, external storage not present", Toast.LENGTH_LONG).show();
+			// Something else is wrong. It may be one of many other states, but
+			// all we need
+			// to know is we can neither read nor write
+			mExternalStorageAvailable = mExternalStorageWriteable = false;
+		}
+
+		if (!mExternalStorageWriteable) {
+			Toast.makeText(ct, "Error, external storage not present",
+					Toast.LENGTH_LONG).show();
 		} else {
 			String gathererQuery = "http://gatherer.wizards.com/Pages/Search/Default.aspx?action=advanced&name=+[";
-			gathererQuery = gathererQuery + Uri.encode("m/^" + cardName.replace(" ", "\\s") + "$/") + "]";
-			if(!castCost.equals("N/A")) {
-				gathererQuery = gathererQuery + "&mana=+=[" + Uri.encode("m/" + castCost + "/") + "]";
+			gathererQuery = gathererQuery
+					+ Uri.encode("m/^" + cardName.replace(" ", "\\s") + "$/")
+					+ "]";
+			if (!castCost.equals("N/A")) {
+				gathererQuery = gathererQuery + "&mana=+=["
+						+ Uri.encode("m/" + castCost + "/") + "]";
 			}
-			new getHTTPAsync().execute(gathererQuery, "", "");//getHTTPResponse(gathererQuery);
+			getHAsync = new getHTTPAsync();
+			getHAsync.execute(gathererQuery, "", "");// getHTTPResponse(gathererQuery);
 		}
 	}
-	
+
+	private class cancelAsync implements OnCancelListener {
+		public void onCancel(DialogInterface arg0) {
+			// TODO Auto-generated method stub
+			if (getHAsync != null) {
+				if (!getHAsync.isCancelled()
+						&& getHAsync.getStatus() == AsyncTask.Status.RUNNING) {
+					getHAsync.cancel(true);
+				}
+			}
+		}
+	}
+
 	protected class getHTTPAsync extends AsyncTask<String, String, String> {
 
 		ProgressDialog pD;
@@ -213,36 +294,40 @@ public class ShowCardDetails extends Activity{
 		protected void onPreExecute() {
 			super.onPreExecute();
 			pD = new ProgressDialog(ct);
-			pD.setCancelable(false);
+			pD.setCancelable(true);
 			pD.setTitle("Checking...");
 			pD.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 			pD.setMessage("Checking for card on Gatherer...");
+			pD.setOnCancelListener(new cancelAsync());
 			pD.show();
 		}
-		
+
 		@Override
 		protected String doInBackground(String... params) {
 			// TODO Auto-generated method stub
-			try {
+			/*try {
 				getHTTPResponse(params[0]);
 			} catch (Exception e) {
 				return e.getMessage();
-			}
+			}*/
 			return "";
 		}
-		
+
 		@Override
 		protected void onPostExecute(String res) {
 			pD.dismiss();
-			if(!res.equals("")) {
+			if (!res.equals("") && !this.isCancelled()) {
 				Toast.makeText(ct, res, Toast.LENGTH_LONG).show();
 			} else {
-				new saveImageAsync().execute(responseString, "", "");
+				if (!this.isCancelled()) {
+					getImgAsync = new saveImageAsync();
+					getImgAsync.execute("/Handlers/Image.ashx?multiverseid=" + multiverseIDInt + "&type=card", "", "");
+				}
 			}
 		}
-		
+
 	}
-	
+
 	private void getHTTPResponse(String q) throws Exception {
 		HttpClient htc = new DefaultHttpClient();
 		boolean success = false;
@@ -253,17 +338,22 @@ public class ShowCardDetails extends Activity{
 			StatusLine statusLine = htr.getStatusLine();
 			if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
 				InputStream iSInput = htr.getEntity().getContent();
-				BufferedReader bR = new BufferedReader(new InputStreamReader(iSInput));//BuffererdInputStream bIS = new BufferedInputStream
+				BufferedReader bR = new BufferedReader(new InputStreamReader(
+						iSInput));// BuffererdInputStream bIS = new
+									// BufferedInputStream
 				String toRead = "";
-				while((toRead = bR.readLine())!=null) {
+				while ((toRead = bR.readLine()) != null) {
 					Log.w(pid, "Reading URL: " + toRead);
-					if(toRead.contains("id=\"ctl00_ctl00_ctl00_MainContent_SubContent_SubContent_cardImage\"")) {
+					if (toRead
+							.contains("id=\"ctl00_ctl00_ctl00_MainContent_SubContent_SubContent_cardImage\"")) {
 						responseString = toRead;
 						int startPoint = responseString.indexOf("src=\"");
-						if(startPoint>0) {
-							responseString = responseString.substring(startPoint + 5);
+						if (startPoint > 0) {
+							responseString = responseString
+									.substring(startPoint + 5);
 							startPoint = responseString.indexOf("\"");
-							responseString = responseString.substring(0, startPoint);
+							responseString = responseString.substring(0,
+									startPoint);
 							Log.w(pid, "Got: " + responseString);
 							success = true;
 						}
@@ -275,7 +365,7 @@ public class ShowCardDetails extends Activity{
 				try {
 					htr.getEntity().getContent().close();
 				} catch (Exception e) {
-					//do nothing
+					// do nothing
 				}
 				// ..more logic
 			} else {
@@ -287,31 +377,49 @@ public class ShowCardDetails extends Activity{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			throw new Exception(e.getMessage());
-			//publishProgress("There was an error retrieving data.\nPlease try again later.");
+			// publishProgress("There was an error retrieving data.\nPlease try again later.");
 		}
-		if(!success) {
-			throw new Exception("There was an error retrieving the card details.");
+		if (!success) {
+			throw new Exception(
+					"There was an error retrieving the card details.");
 		}
-		
+
 	}
+
+	
+	private class cancelImageAsync implements OnCancelListener {
+		public void onCancel(DialogInterface arg0) {
+			// TODO Auto-generated method stub
+			if (getImgAsync != null) {
+				if (!getImgAsync.isCancelled()
+						&& getImgAsync.getStatus() == AsyncTask.Status.RUNNING) {
+					getImgAsync.cancel(true);
+				}
+			}
+		}
+	}
+	
 	
 	protected class saveImageAsync extends AsyncTask<String, String, String> {
 
 		ProgressDialog pD;
+		String argumentZero = "";
 
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
 			pD = new ProgressDialog(ct);
-			pD.setCancelable(false);
+			pD.setCancelable(true);
 			pD.setTitle("Downloading...");
 			pD.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 			pD.setMessage("Getting image from Gatherer...");
+			pD.setOnCancelListener(new cancelImageAsync());
 			pD.show();
 		}
-		
+
 		@Override
 		protected String doInBackground(String... arg0) {
+			argumentZero = arg0[0];
 			// TODO Auto-generated method stub
 			try {
 				saveImage(arg0[0]);
@@ -322,20 +430,31 @@ public class ShowCardDetails extends Activity{
 			}
 			return "";
 		}
-		
+
 		@Override
 		protected void onPostExecute(String res) {
-			if(!res.equals("")) {
-				Toast.makeText(ct, "An error has occurred downloading the image. Please try again later", Toast.LENGTH_LONG).show();
+			if (!res.equals("") && !this.isCancelled()) {
+				Toast.makeText(
+						ct,
+						"An error has occurred downloading the image. Please try again later",
+						Toast.LENGTH_LONG).show();
+				deleteImage(argumentZero);
 			}
 			pD.dismiss();
 			getCardImage();
 		}
-		
+
+	}
+
+	private void deleteImage(String q) {
+		File f = new File(Environment
+				.getExternalStorageDirectory().getAbsolutePath()
+				+ "/mtgjudge/images/" + multiverseIDInt + ".jpg");
+		f.delete();
 	}
 	
 	private void saveImage(String q) throws Exception {
-		while(q.contains("../")) {
+		while (q.contains("../")) {
 			int ind = q.indexOf("../");
 			q = q.substring(ind + 3);
 		}
@@ -346,39 +465,40 @@ public class ShowCardDetails extends Activity{
 		connection.connect();
 		// this will be useful so that you can show a typical 0-100%
 		// progress bar
-//		int fileLength = connection.getContentLength();
+		// int fileLength = connection.getContentLength();
 
 		// download the file
-		File toCreateDir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge/images/");
+		File toCreateDir = new File(Environment.getExternalStorageDirectory()
+				.getAbsolutePath() + "/mtgjudge/images/");
 		// have the object build the directory structure, if needed.
 		toCreateDir.mkdirs();
-		InputStream input = new BufferedInputStream(
-				url.openStream());
-		OutputStream output = new FileOutputStream(
-				Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge/images/" + cardID + ".jpg");
+		InputStream input = new BufferedInputStream(url.openStream());
+		OutputStream output = new FileOutputStream(Environment
+				.getExternalStorageDirectory().getAbsolutePath()
+				+ "/mtgjudge/images/" + multiverseIDInt + ".jpg");
 
-		
 		byte data[] = new byte[1024];
 		long total = 0;
 		int count;
 		while ((count = input.read(data)) != -1) {
-//			total += count;
+			// total += count;
 			// publishing the progress....
-//			publishProgress((int) (total));
+			// publishProgress((int) (total));
 			output.write(data, 0, count);
 		}
 
 		output.flush();
 		output.close();
 		input.close();
-		
-		File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge/images/" + cardID + ".jpg");
-		if(f.length()<=0) {
+
+		File f = new File(Environment.getExternalStorageDirectory()
+				.getAbsolutePath() + "/mtgjudge/images/" + multiverseIDInt + ".jpg");
+		if (f.length() <= 0) {
 			f.delete();
 			throw new Exception("File is zero bytes");
 		}
 	}
-	
+
 	private void exitDetails() {
 		finish();
 	}

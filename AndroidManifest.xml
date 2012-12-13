@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.ndrue.gathereroffline"
-    android:versionCode="1"
-    android:versionName="0.1" >
+    android:versionCode="2"
+    android:versionName="0.11" >
 
     <uses-sdk
         android:minSdkVersion="8"
@@ -25,6 +25,8 @@
             </intent-filter>
         </activity>
         
+        <activity android:name="AdvancedSearch"></activity>
+        <activity android:name="AdvancedSearchHome"></activity>
         <activity android:name="ExtraAddOns"></activity>
         <activity android:name="MiscOptions"></activity>
         <activity android:name="TournamentRules"></activity>

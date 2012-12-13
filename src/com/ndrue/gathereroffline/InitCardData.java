@@ -34,6 +34,7 @@ public class InitCardData extends Activity {
 		//myDbHelper = new DataBaseHelper(this);
 		try {
 			myDbHelper.createDataBase();
+			myDbHelper.close();
 		} catch (IOException ioe) {
 			throw new Error("Unable to create database");
 		}

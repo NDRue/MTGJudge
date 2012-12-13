@@ -118,6 +118,8 @@ public class ComprehensiveRules extends Activity {
 			Bundle b = new Bundle();
 			b.putString("from", "ComprRules");
 			b.putString("parent", "Search0805466");
+			b.putString("isSearch", "Y");
+			b.putString("searchStr", f);
 			String[] toSearchArr = new String[findResults.size()];
 			findResults.toArray(toSearchArr);
 			b.putStringArray("searches", toSearchArr);

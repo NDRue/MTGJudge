@@ -1,10 +1,18 @@
 package com.ndrue.gathereroffline;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -25,8 +33,8 @@ public class HomeScreen extends Activity {
 	private ArrayAdapter<String> hsAdapter;
 	private ArrayList<String> hsItemsSub;
 	private ArrayAdapter<String> hsAdapterSub;
-	private final String[] hsItemsHeader = new String[] { "Quick reference >",
-			"Rules >", "Misc >" };
+	private final String[] hsItemsHeader = new String[] { "Main Items >",
+			"Oracle, Etc. >", "Misc >" };
 	private String[][] hsItemsArray = new String[3][10];
 	private final String[] hsItemsInArray = new String[] { "Penalties",
 			"Layers / Casting Spells",
@@ -58,11 +66,12 @@ public class HomeScreen extends Activity {
 					"> Layers / Casting Spells",
 					"> Resolving Spells / Copiable Characteristics",
 					"> Types of Information", "> Head Judge Announcement",
-					"> Reviews / Feedback" };
-			hsItemsArray[1] = new String[] { "> Comprehensive Rules",
-					"> Infraction Procedure Guide", "> Magic Tournament Rules" };
-			hsItemsArray[2] = new String[] { "> Oracle", "> Decklist Counter",
-					"> Add On", "> Miscellaneous Options" };
+					"> Reviews / Feedback",
+					"> Comprehensive Rules",
+					"> Infraction Procedure Guide",
+					"> Magic Tournament Rules" };
+			hsItemsArray[1] = new String[] { "> Oracle", "> Advanced Oracle Search", "> Decklist Counter" };
+			hsItemsArray[2] = new String[] { "> Add On", "> Miscellaneous Options", "> About" };
 			// for (int i = 0; i < hsItemsInArray.length; ++i) {
 			for (int i = 0; i < hsItemsHeader.length; ++i) {
 				// hsItems.add(hsItemsInArray[i]);
@@ -136,6 +145,7 @@ public class HomeScreen extends Activity {
 						sel = i;
 					}
 				}
+				Log.e(pid, "Clicked: " + dir + ", " + hsParent + ", " + sel);
 				switch (hsParent) {
 				case 0:
 					switch (sel) {
@@ -172,20 +182,32 @@ public class HomeScreen extends Activity {
 						reUsable.putExtra("image", R.drawable.reviewfeedback);
 						startActivity(reUsable);
 						break;
+					case 6:
+						reUsable = new Intent(ct, ComprehensiveRules.class);
+						startActivity(reUsable);
+						break;
+					case 7:
+						reUsable = new Intent(ct, InfractionPenalty.class);
+						startActivity(reUsable);
+						break;
+					case 8:
+						reUsable = new Intent(ct, TournamentRules.class);
+						startActivity(reUsable);
+						break;
 					}
 					break;
 				case 1:
 					switch (sel) {
 					case 0:
-						reUsable = new Intent(ct, ComprehensiveRules.class);
+						reUsable = new Intent(ct, MainActivity.class);
 						startActivity(reUsable);
 						break;
 					case 1:
-						reUsable = new Intent(ct, InfractionPenalty.class);
+						reUsable = new Intent(ct, AdvancedSearchHome.class);
 						startActivity(reUsable);
 						break;
 					case 2:
-						reUsable = new Intent(ct, TournamentRules.class);
+						reUsable = new Intent(ct, DecklistCounter.class);
 						startActivity(reUsable);
 						break;
 					}
@@ -193,20 +215,15 @@ public class HomeScreen extends Activity {
 				case 2:
 					switch (sel) {
 					case 0:
-						reUsable = new Intent(ct, MainActivity.class);
-						startActivity(reUsable);
-						break;
-					case 1:
-						reUsable = new Intent(ct, DecklistCounter.class);
-						startActivity(reUsable);
-						break;
-					case 2:
 						reUsable = new Intent(ct, ExtraAddOns.class);
 						startActivity(reUsable);
 						break;
-					case 3:
+					case 1:
 						reUsable = new Intent(ct, MiscOptions.class);
 						startActivity(reUsable);
+						break;
+					case 2:
+						showVersion();
 						break;
 					}
 					break;
@@ -219,6 +236,67 @@ public class HomeScreen extends Activity {
 		}
 	}
 
+	private void showVersion() {
+		Log.e(pid, "Entered showVersion");
+		String lastDT = "";
+		String lastVer = "";
+		DBAdapter dba = new DBAdapter(ct, "GathererCards",
+				"cname,ccost,ctype,cpowert,crules,csetrare",
+				"text,text,text,text,text,text");
+		Log.e(pid, "Entered showVersion 2");
+		dba.open();
+		Log.e(pid, "Entered showVersion 3");
+		Cursor c = dba.query("MiscOpt", new String[] { "optvalue" }, "optname = ?",
+					new String[] { "lastdt" });
+		Log.e(pid, "Entered showVersion 4");
+		if(c.moveToFirst()) {
+			SimpleDateFormat dt = new SimpleDateFormat("yyyyy-mm-dd hh:mm:ss"); 
+			Date date;
+			try {
+				date = dt.parse(c.getString(0));
+				SimpleDateFormat dt1 = new SimpleDateFormat("dd MMM yyyy");
+				lastDT = dt1.format(date);
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+		}
+		Log.e(pid, "Entered showVersion 7");
+		c.close();
+		Log.e(pid, "Got last DT: " + lastDT);
+		c = dba.query("MiscOpt", new String[] { "optvalue" }, "optname = ?",
+				new String[] { "dbversion" });
+		if(c.moveToFirst()) {
+			lastVer = c.getString(0);
+		}
+		c.close();
+		dba.close();
+		Log.e(pid, "Got last ver: " + lastVer);
+		Log.e(pid, "Closed DB showVersion");
+		AlertDialog.Builder aD = new AlertDialog.Builder(ct);
+		aD.setTitle("About");
+		String crVer = "";
+		try {
+			crVer = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+		} catch (NameNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Log.e(pid, "Showing:\n" + "Judge Core App\n\nVersion: " + crVer + "\n\nDatabase last updated:\n" +
+		lastDT + "\n\nDatabase version:\n" + lastVer);
+		aD.setMessage("Judge Core App\n\nVersion: " + crVer + "\n\nDatabase last updated:\n" +
+		lastDT + "\n\nDatabase version:\n" + lastVer);
+		aD.setPositiveButton("OK", new OnClickListener() {
+
+			public void onClick(DialogInterface dialog, int which) {
+				// TODO Auto-generated method stub
+				dialog.dismiss();
+			}
+			
+		});
+		aD.show();
+	}
+	
 	@Override
 	public void onBackPressed() {
 		if (hsLevel == 0) {
