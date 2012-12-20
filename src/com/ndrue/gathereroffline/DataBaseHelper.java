@@ -58,13 +58,19 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
 	private void checkIfValid() {
 		Cursor c = null;
+		String tblCheck = "";
 		boolean restartNew = false;
 		DBAdapter dba = new DBAdapter(myContext, "MiscOpt",
 				"optname, optvalue", "text,text");
 		try {
 			dba.open();
-			c = dba.query("MiscOpt", "optname");
+			c = dba.query("MiscOpt", "optvalue", "optname = ?", new String[] { "latesttable" });
 			if (!c.moveToFirst()) {
+				restartNew = true;
+			} else {
+				tblCheck = c.getString(0);
+			}
+			if (tblCheck.equals("")) {
 				restartNew = true;
 			}
 		} catch (Exception e) {
@@ -74,6 +80,22 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 				c.close();
 			}
 			dba.close();
+		}
+		if (!restartNew) {
+			try {
+				dba.open();
+				c = dba.query(tblCheck, "COUNT(*)");
+				if (!c.moveToFirst()) {
+					restartNew = true;
+				}
+			} catch (Exception e) {
+				restartNew = true;
+			} finally {
+				if (c != null) {
+					c.close();
+				}
+				dba.close();
+			}
 		}
 		if (restartNew) {
 			this.getReadableDatabase();
@@ -119,7 +141,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 		// Open the empty db as the output stream
 		OutputStream myOutput = new FileOutputStream(outFileName);
 		// transfer bytes from the inputfile to the outputfile
-		for (int i = 1; i <= 5; ++i) {
+		for (int i = 1; i <= 6; ++i) {
 			InputStream myInput = myContext.getAssets().open(
 					DB_NAME + ".00" + i);
 			byte[] buffer = new byte[1024];

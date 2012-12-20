@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -18,12 +19,16 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -49,12 +54,17 @@ public class MiscOptions extends Activity {
 	private EditText input;
 	private ArrayAdapter<String> hsAdapter;
 	private final String[] optList = new String[] {
-			"Check for database updates", "Set update location" };
+			"Check for database updates", "Set update location",
+			"Clear stored card images" };
 	private DBAdapter dba;
 	private final String latestFile = "getlatest.php";
 	private final String downloadFile = "getlatestfile.php";
 	private String getLength = "";
 	private String uri = "";
+	private getUpdates getUp = null;
+	private startDownload startDwn = null;
+	private float currentSpeed;
+	private long startTime;
 
 	@Override
 	public void onCreate(Bundle b) {
@@ -99,6 +109,68 @@ public class MiscOptions extends Activity {
 		if (opt.equals(optList[1])) {
 			setURL();
 		}
+		if (opt.equals(optList[2])) {
+			clearAll();
+		}
+	}
+
+	private void clearAll() {
+		AlertDialog.Builder aD = new AlertDialog.Builder(ct);
+		aD.setTitle("Confirm delete");
+		aD.setMessage("Confirm deletion of all stored card images?");
+
+		aD.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				yesDelete();
+			}
+		});
+
+		aD.setNegativeButton("No", new DialogInterface.OnClickListener() {
+
+			public void onClick(DialogInterface arg0, int arg1) {
+				// TODO Auto-generated method stub
+				arg0.dismiss();
+			}
+		});
+		aD.show();
+	}
+
+	private void yesDelete() {
+		File f = new File(Environment.getExternalStorageDirectory()
+				.getAbsolutePath() + "/mtgjudge/images");
+		File[] innerF = f.listFiles();
+		boolean deleteSuccess = true;
+		if (innerF != null) {
+			for (int i = 0; i < innerF.length; ++i) {
+				if (!innerF[i].delete()) {
+					deleteSuccess = false;
+				}
+			}
+		}
+		if (deleteSuccess) {
+			f.delete();
+			Toast.makeText(ct, "Clearing was successful", Toast.LENGTH_SHORT)
+					.show();
+		} else {
+			Toast.makeText(ct,
+					"An error has occurred while clearing.\nPlease try again.",
+					Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	private class getUpdatesCancelled implements OnCancelListener {
+
+		public void onCancel(DialogInterface dialog) {
+			// TODO Auto-generated method stub
+			if (getUp != null) {
+				if (!getUp.isCancelled()
+						&& getUp.getStatus() == AsyncTask.Status.RUNNING) {
+					getUp.cancel(true);
+
+				}
+			}
+		}
+
 	}
 
 	protected class getUpdates extends AsyncTask<String, String, String> {
@@ -109,15 +181,24 @@ public class MiscOptions extends Activity {
 		protected void onPreExecute() {
 			super.onPreExecute();
 			pD = new ProgressDialog(MiscOptions.this);
-			pD.setCancelable(false);
+			pD.setCancelable(true);
 			pD.setTitle("Checking...");
 			pD.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 			pD.setMessage("Contacting site...");
+			pD.setOnCancelListener(new getUpdatesCancelled());
 			pD.show();
 		}
 
 		@Override
 		protected String doInBackground(String... arg0) {
+
+			HttpParams httpParameters = new BasicHttpParams();
+			int timeoutConnection = 3000;
+			HttpConnectionParams.setConnectionTimeout(httpParameters,
+					timeoutConnection);
+			int timeoutSocket = 5000;
+			HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
+
 			// TODO Auto-generated method stub
 			dba.open();
 			Cursor c = null;
@@ -125,11 +206,12 @@ public class MiscOptions extends Activity {
 			try {
 				c = dba.query("MiscOpt", "optvalue", "optname = ?",
 						new String[] { "updatesite" });
-				//startManagingCursor(c);
+				// startManagingCursor(c);
+				if (!c.moveToFirst()) {
+					crashed = true;
+				}
+				uri = c.getString(0);
 			} catch (Exception e) {
-				crashed = true;
-			}
-			if (!c.moveToFirst()) {
 				crashed = true;
 			}
 			if (crashed) {
@@ -137,12 +219,12 @@ public class MiscOptions extends Activity {
 				dba.close();
 				finish();
 			}
-			uri = c.getString(0);
 			if (c != null) {
 				c.close();
 			}
 			dba.close();
-			HttpClient htc = new DefaultHttpClient();
+			DefaultHttpClient htc = new DefaultHttpClient();
+			htc.setParams(httpParameters);
 			boolean success = false;
 			String responseString = "";
 			try {
@@ -175,14 +257,19 @@ public class MiscOptions extends Activity {
 					c.close();
 				}
 				c = null;
+				int getCt = 1;
 				Log.w(pid, "Checking value: " + getDetails[0]);
-				c = dba.query("MiscOpt", "COUNT(*)",
-						"optname = ? AND optvalue < ?", new String[] {
-								"lastdt", getDetails[0] });
-				//startManagingCursor(c);
-				c.moveToFirst();
-				int getCt = c.getInt(0);
-				Log.w(pid, "Got count: " + getCt);
+				try {
+					c = dba.query("MiscOpt", "COUNT(*)",
+							"optname = ? AND optvalue < ?", new String[] {
+									"lastdt", getDetails[0] });
+					// startManagingCursor(c);
+					c.moveToFirst();
+					getCt = c.getInt(0);
+					Log.w(pid, "Got count: " + getCt);
+				} catch (Exception e) {
+					// do nothing
+				}
 				c.close();
 				dba.close();
 				if (getCt > 0) {
@@ -197,19 +284,38 @@ public class MiscOptions extends Activity {
 		@Override
 		protected void onProgressUpdate(String... arg0) {
 			super.onProgressUpdate(arg0);
-			Toast.makeText(ct, arg0[0], Toast.LENGTH_LONG).show();
+			if (!this.isCancelled()) {
+				Toast.makeText(ct, arg0[0], Toast.LENGTH_LONG).show();
+			}
 		}
 
 		@Override
 		protected void onPostExecute(String res) {
 			pD.dismiss();
 			Log.w(pid, "Post Execute: " + res);
-			if (!res.equals("")) {
+			if (!res.equals("") && !this.isCancelled()) {
 				getLength = res;
 				// download file
 				confirmDownload();
 			}
 		}
+	}
+
+	private class cancelDownload implements OnCancelListener {
+
+		public void onCancel(DialogInterface dialog) {
+			// TODO Auto-generated method stub
+			if (startDwn != null) {
+				if (!startDwn.isCancelled()
+						&& startDwn.getStatus() == AsyncTask.Status.RUNNING) {
+					startDwn.cancel(true);
+					File f = new File(Environment.getExternalStorageDirectory()
+							.getAbsolutePath() + "/mtgjudge/tempdatabase.data");
+					f.delete();
+				}
+			}
+		}
+
 	}
 
 	protected class startDownload extends AsyncTask<String, Integer, String> {
@@ -220,15 +326,19 @@ public class MiscOptions extends Activity {
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
+			currentSpeed = 0.0f;
+			Date d = new Date();
+			startTime = d.getTime();
 			try {
 				filesize = Integer.parseInt(getLength);
 				pD = new ProgressDialog(ct);
 				pD.setTitle("Downloading");
-				pD.setCancelable(false);
+				pD.setCancelable(true);
 				pD.setMessage("Downloading database...please be patient...");
 				pD.setMax(filesize);
 				pD.setProgress(0);
 				pD.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+				pD.setOnCancelListener(new cancelDownload());
 				pD.show();
 			} catch (Exception e) {
 				Toast.makeText(
@@ -240,29 +350,35 @@ public class MiscOptions extends Activity {
 
 		@Override
 		protected String doInBackground(String... params) {
+
 			// TODO Auto-generated method stub
 			if (filesize > 0) {
 				try {
 					URL url = new URL(uri + "/" + downloadFile);
 					URLConnection connection = url.openConnection();
+					connection.setConnectTimeout(3000);
 					connection.connect();
 					// this will be useful so that you can show a typical 0-100%
 					// progress bar
 					int fileLength = connection.getContentLength();
 
 					// download the file
-					File toCreateDir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge/");
+					File toCreateDir = new File(Environment
+							.getExternalStorageDirectory().getAbsolutePath()
+							+ "/mtgjudge/");
 					// have the object build the directory structure, if needed.
 					toCreateDir.mkdirs();
 					InputStream input = new BufferedInputStream(
 							url.openStream());
-					OutputStream output = new FileOutputStream(
-							Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge/tempdatabase.data");
+					OutputStream output = new FileOutputStream(Environment
+							.getExternalStorageDirectory().getAbsolutePath()
+							+ "/mtgjudge/tempdatabase.data");
 
 					byte data[] = new byte[1024];
 					long total = 0;
 					int count;
-					while ((count = input.read(data)) != -1) {
+					while ((count = input.read(data)) != -1
+							&& !this.isCancelled()) {
 						total += count;
 						// publishing the progress....
 						publishProgress((int) (total));
@@ -273,24 +389,32 @@ public class MiscOptions extends Activity {
 					output.close();
 					input.close();
 
-					String outFileName = DB_PATH;// + DB_NAME;
-					// Open the empty db as the output stream
-					OutputStream myOutput = new FileOutputStream(outFileName);
-					// transfer bytes from the inputfile to the outputfile
-					InputStream myInput = new BufferedInputStream(
-							new FileInputStream(
-									Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge/tempdatabase.data"));
-					byte[] buffer = new byte[1024];
-					int length;
-					while ((length = myInput.read(buffer)) > 0) {
-						myOutput.write(buffer, 0, length);
+					if (!this.isCancelled()) {
+						String outFileName = DB_PATH;// + DB_NAME;
+						// Open the empty db as the output stream
+						OutputStream myOutput = new FileOutputStream(
+								outFileName);
+						// transfer bytes from the inputfile to the outputfile
+						InputStream myInput = new BufferedInputStream(
+								new FileInputStream(Environment
+										.getExternalStorageDirectory()
+										.getAbsolutePath()
+										+ "/mtgjudge/tempdatabase.data"));
+						byte[] buffer = new byte[1024];
+						int length;
+						while ((length = myInput.read(buffer)) > 0) {
+							myOutput.write(buffer, 0, length);
+						}
+						myInput.close();
+						Log.i("CopyDB", "Updating database...done");
+						// Close the streams
+						myOutput.flush();
+						myOutput.close();
+						deleteDirectory(new File(Environment
+								.getExternalStorageDirectory()
+								.getAbsolutePath()
+								+ "/mtgjudge"));
 					}
-					myInput.close();
-					Log.i("CopyDB", "Updating database...done");
-					// Close the streams
-					myOutput.flush();
-					myOutput.close();
-					deleteDirectory(new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/mtgjudge"));
 				} catch (Exception e) {
 					e.printStackTrace();
 					return "ERROR";
@@ -302,21 +426,36 @@ public class MiscOptions extends Activity {
 		@Override
 		protected void onProgressUpdate(Integer... arg0) {
 			super.onProgressUpdate(arg0);
-			pD.setProgress(arg0[0]);
+			if (!this.isCancelled()) {
+				pD.setProgress(arg0[0]);
+				Date d = new Date();
+				long timeElapsed = d.getTime() - startTime;
+				timeElapsed = timeElapsed / 1000;
+				currentSpeed = ((float)arg0[0]) / ((float)timeElapsed);
+				currentSpeed = (Math.round((currentSpeed / 1024.0f) * 10) / 10.0f);
+				Log.w(pid, "Updating speed: " + currentSpeed + ", " + timeElapsed + ", " + arg0[0] + ", " + startTime + ", " + d.getTime());
+				pD.setTitle("Downloading (" + currentSpeed + " KB/s)");
+				pD.setCancelable(true);
+				pD.setMessage("Downloading database...please be patient...\n("
+						+ currentSpeed + " KB/s)");
+			}
 		}
 
 		@Override
 		protected void onPostExecute(String res) {
 			super.onPostExecute(res);
 			pD.dismiss();
-			if (res.equals("ERROR")) {
+			if (res.equals("ERROR") && !this.isCancelled()) {
 				Toast.makeText(
 						ct,
 						"An error has occurred during download.\nPlease try again later.",
 						Toast.LENGTH_LONG).show();
 			} else {
-				Toast.makeText(ct, "Database has been successfully updated",
-						Toast.LENGTH_LONG).show();
+				if (!this.isCancelled()) {
+					Toast.makeText(ct,
+							"Database has been successfully updated",
+							Toast.LENGTH_LONG).show();
+				}
 			}
 		}
 	}
@@ -347,7 +486,8 @@ public class MiscOptions extends Activity {
 
 		aD.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
-				new startDownload().execute();
+				startDwn = new startDownload();
+				startDwn.execute();
 			}
 		});
 
@@ -362,7 +502,8 @@ public class MiscOptions extends Activity {
 	}
 
 	private void checkUpdates() {
-		new getUpdates().execute("", "", "");
+		getUp = new getUpdates();
+		getUp.execute("", "", "");
 
 	}
 
@@ -414,7 +555,7 @@ public class MiscOptions extends Activity {
 				String value = input.getText().toString();
 				dba.open();
 				dba.update("MiscOpt", new String[] { "optvalue" },
-						new String[] { value }, "optname = 'updatesite'");
+						new String[] { value }, "optname = ?", new String[] { "'updatesite" });
 				dba.close();
 				dialog.cancel();
 				Log.w(pid, "Got: " + value);
@@ -431,20 +572,14 @@ public class MiscOptions extends Activity {
 					}
 				});
 
-		alert.setNeutralButton("Default",
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int whichButton) {
-						// Canceled.
-						dba.open();
-						dba.update(
-								"MiscOpt",
-								new String[] { "optvalue" },
-								new String[] { "http://kyo.kuiki.net/mtgjudge" },
-								"optname = 'updatesite'");
-						dba.close();
-						dialog.cancel();
-						Log.w(pid, "Default");
-					}
-				});
+		/*
+		 * alert.setNeutralButton("Default", new
+		 * DialogInterface.OnClickListener() { public void
+		 * onClick(DialogInterface dialog, int whichButton) { // Canceled.
+		 * dba.open(); dba.update( "MiscOpt", new String[] { "optvalue" }, new
+		 * String[] { "http://kyo.kuiki.net/mtgjudge" },
+		 * "optname = 'updatesite'"); dba.close(); dialog.cancel(); Log.w(pid,
+		 * "Default"); } });
+		 */
 	}
 }

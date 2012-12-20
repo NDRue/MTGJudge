@@ -6,15 +6,17 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:id="@+id/textParentView">"
 
-            <TextView
+            <!--  TextView
                 android:id="@+id/textData"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=""
                 android:textSize="13dp"
-                android:textColor="@android:color/white" />
+                android:textColor="@android:color/white" / -->
 
         </LinearLayout>
     </ScrollView>

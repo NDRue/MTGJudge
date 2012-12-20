@@ -25,7 +25,7 @@ public class DBAdapter {
 
 	private DatabaseHelper DBHelper;
 	private SQLiteDatabase db;
-	
+
 	private static final String pid = "DBAdapter";
 
 	public String getTB() {
@@ -77,7 +77,7 @@ public class DBAdapter {
 
 	public DBAdapter open() throws SQLException {
 		try {
-		db = DBHelper.getWritableDatabase();
+			db = DBHelper.getWritableDatabase();
 		} catch (Exception e) {
 			Log.w(pid, e.toString());
 		}
@@ -85,16 +85,21 @@ public class DBAdapter {
 	}
 
 	public void close() {
-		DBHelper.close();
+		try {
+			DBHelper.close();
+		} catch (Exception e) {
+			Log.w(pid, e.toString());
+		}
 	}
 
 	public long insert(String tbname, String[] headers, String[] vals) {
 		ContentValues cv = new ContentValues();
 		for (int i = 0; i < headers.length; ++i) {
-			Log.w("DatabaseMsg", "Inserting: `" + headers[i] + "` as `" + vals[i] + "`");
+			Log.w("DatabaseMsg", "Inserting: `" + headers[i] + "` as `"
+					+ vals[i] + "`");
 			cv.put(headers[i], vals[i]);
 		}
-		while(db.isDbLockedByCurrentThread() || db.isDbLockedByOtherThreads()) {
+		while (db.isDbLockedByCurrentThread() || db.isDbLockedByOtherThreads()) {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
@@ -102,7 +107,7 @@ public class DBAdapter {
 				e.printStackTrace();
 			}
 		}
-		if(!db.isOpen()) {
+		if (!db.isOpen()) {
 			open();
 		}
 		return db.insert(tbname, null, cv);
@@ -128,11 +133,11 @@ public class DBAdapter {
 		Cursor c = db.rawQuery(rq, args);
 		return c;
 	}
-	
+
 	public Cursor rawQuery(String rq) {
 		return rawQuery(rq, null);
 	}
-	
+
 	public Cursor query(String tbname, String cols) {
 		return query(tbname, cols, "", null, null, null, null, -1);
 	}
@@ -200,14 +205,18 @@ public class DBAdapter {
 				orderBy, limit);
 		return c;
 	}
-	
-	public boolean update(String tbname, String[] headers, String[] vals,
-			String condition) {
+
+	public boolean update(String tbname, String[] headers, String[] vals, String cond, String[] condvar) {
 		ContentValues args = new ContentValues();
 		for (int i = 0; i < headers.length; ++i) {
 			args.put(headers[i], vals[i]);
 		}
-		return db.update(tbname, args, condition, null) > 0;
+		return db.update(tbname, args, cond, condvar) > 0;
+	}
+	
+	public boolean update(String tbname, String[] headers, String[] vals,
+			String condition) {
+		return update(tbname, headers, vals, condition, null);
 	}
 
 	public SQLiteStatement prepare(String sqlstmt) {

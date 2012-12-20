@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
 import android.view.MotionEvent;
@@ -44,16 +45,19 @@ public class ZoomImageView extends ImageView implements OnGestureListener {
 	}
 
 	public void setImage(Drawable bitmap, Activity activity) {
+		System.gc();
 		image = bitmap;
 		imageSetting(activity, bitmap);
 	}
 
 	public void setImage(Bitmap bitmap, Activity activity) {
+		System.gc();
 		image = new BitmapDrawable(bitmap).getCurrent();
 		imageSetting(activity, bitmap);
 	}
 
 	private void imageSetting(Activity a, Drawable b) {
+		System.gc();
 		Bitmap bmp = ((BitmapDrawable) b).getBitmap();
 		imageSetting(a, bmp);
 	}
@@ -71,12 +75,18 @@ public class ZoomImageView extends ImageView implements OnGestureListener {
 		activity.getWindow().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
 		int height = displaymetrics.heightPixels;
 		int wwidth = displaymetrics.widthPixels;
+		Log.d("DISPLAY", "Scale down now: " + scaleDown);
 		if(bmpWd>wwidth) {
-			scaleDown = Float.valueOf(wwidth) / bmpWd;
+			Log.d("DISPLAY", "Width greater");
+			scaleDown = (Float.valueOf(wwidth) / bmpWd);
+			Log.d("DISPLAY", "Scale down now: " + scaleDown);
 		}
-		if(bmpHt>height && (scaleDown*bmpHt)>height) {
-			scaleDown = Float.valueOf(height) / bmpHt;
+		if(bmpHt>height && (scaleDown*bmpHt)>(height * 9.0f / 10.0f)) {
+			Log.d("DISPLAY", "Height greater");
+			scaleDown = (Float.valueOf(height) / bmpHt) * 9.0f / 10.0f;
+			Log.d("DISPLAY", "Scale down now: " + scaleDown);
 		}
+		Log.d("DISPLAY", "Scale down now: " + scaleDown);
 		imageX = winX = (int)(bmpWd * scaleDown);
 		imageY = winY = (int)(bmpHt * scaleDown);
 /*		imageX = winX = activity.getWindow().getWindowManager()

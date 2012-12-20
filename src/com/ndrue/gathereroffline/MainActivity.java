@@ -34,6 +34,7 @@ public class MainActivity extends Activity {
 	private Context ct;
 	private ArrayAdapter<String> arrAdapter;
 	private ArrayList<String> arrList;
+	private ArrayList<String> arrMultiverseID;
 	private String queryStr = "";
 	private LoadCards lC;
 	private boolean isChanged = false;
@@ -42,6 +43,10 @@ public class MainActivity extends Activity {
 	private boolean timeoutTrue = false;
 	private boolean searchwaitRunning = false;
 	private LogCatcher logC;
+	private String setName = "";
+	private Bundle incomingBundle;
+	private boolean firstRun = true;
+	private NVPair nvPair;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -62,8 +67,8 @@ public class MainActivity extends Activity {
 		@Override
 		protected String doInBackground(String... params) {
 			// TODO Auto-generated method stub
-			//While it's true, do nothing
-			while(searchwaitRunning) {
+			// While it's true, do nothing
+			while (searchwaitRunning) {
 				timeoutTrue = true;
 				searchwaitRunning = false;
 				try {
@@ -75,29 +80,28 @@ public class MainActivity extends Activity {
 			}
 			return searchwaitRunning ? "Y" : "N";
 		}
-		
+
 		@Override
 		protected void onPostExecute(String res) {
 			timeoutTrue = false;
 			searchwaitRunning = false;
 			searchText();
 		}
-		
+
 	}
-	
+
 	private void searchWait() {
 		Log.w(pid, "searchWait: " + searchwaitRunning + ", " + timeoutTrue);
 		searchwaitRunning = true;
-		if(!timeoutTrue) {
+		if (!timeoutTrue) {
 			new searchWaitAsync().execute();
 		}
 	}
-	
-	
+
 	private void searchText() {
 		EditText et1 = (EditText) findViewById(R.id.editText1);
 		queryStr = et1.getText().toString();
-		if (queryStr.length() >= 3) {
+		if (queryStr.length() >= 3 || !setName.equals("")) {
 			isChanged = true;
 			if (lC == null) {
 				LinearLayout infobar = (LinearLayout) findViewById(R.id.infoviewbar);
@@ -109,7 +113,8 @@ public class MainActivity extends Activity {
 				lC = new LoadCards();
 				lC.execute("", "", "");
 			} else {
-				Log.w(pid, "Getting status: " + lC.getStatus() + ", " + AsyncTask.Status.FINISHED);
+				Log.w(pid, "Getting status: " + lC.getStatus() + ", "
+						+ AsyncTask.Status.FINISHED);
 				if (lC.getStatus() == AsyncTask.Status.FINISHED) {
 					LinearLayout infobar = (LinearLayout) findViewById(R.id.infoviewbar);
 					infobar.setVisibility(View.VISIBLE);
@@ -129,7 +134,9 @@ public class MainActivity extends Activity {
 				// Toast.LENGTH_LONG).show();
 			}
 			Log.w(pid, "Clearing arrList not AsyncTask");
+			arrMultiverseID.clear();
 			arrList.clear();
+			nvPair = new NVPair();
 			arrAdapter.notifyDataSetChanged();
 		}
 		lastLength = queryStr.length();
@@ -138,8 +145,16 @@ public class MainActivity extends Activity {
 	}
 
 	private void initVar() {
+		try {
+			if (getIntent().getExtras().containsKey("setnamerestrict")) {
+				setName = getIntent().getExtras().getString("setnamerestrict");
+			}
+		} catch (Exception e) {
+			setName = "";
+		}
 		// Add listener for text change
 		logC = new LogCatcher();
+		arrMultiverseID = new ArrayList<String>();
 		arrList = new ArrayList<String>();
 		arrAdapter = new ArrayAdapter<String>(ct, R.layout.listview_item,
 				arrList);
@@ -195,12 +210,14 @@ public class MainActivity extends Activity {
 			}
 
 		});
+		new LoadCards().execute("");
 	}
 
 	private void clickedItem(String cx) {
 		Intent itn = new Intent(ct, ShowCardDetails.class);
 		Bundle b = new Bundle();
 		b.putString("searchquery", cx);
+		b.putString("multiverseid", nvPair.get(cx));
 		itn.putExtras(b);
 		startActivity(itn);
 	}
@@ -224,9 +241,11 @@ public class MainActivity extends Activity {
 			}
 			updateLocked = true;
 			String toRet = "N/A";
-			if (queryStr.length() >= 3) {
+			if (queryStr.length() >= 3 || !setName.equals("")) {
 				Log.w(pid, "Clearing arrList AsyncTask");
 				arrList.clear();
+				arrMultiverseID.clear();
+				nvPair = new NVPair();
 				dbadapter = new DBAdapter(ct, "GathererCards",
 						"cname,ccost,ctype,cpowert,crules,csetrare",
 						"text,text,text,text,text,text");
@@ -238,16 +257,28 @@ public class MainActivity extends Activity {
 					isChanged = false;
 					// arrList.clear();
 				}
-				if (queryStr.length() >= 3) {
-					Cursor c = dbadapter.query("GathererCards",
-							new String[] { "cname" }, "cname LIKE ?",
-							new String[] { "%" + queryStr + "%" }, null, null,
-							"cname", -1);
+				if (queryStr.length() >= 3 || !setName.equals("")) {
+					Cursor c = null;
+					if (!setName.equals("")) {
+						c = dbadapter.query("GathererCards",
+								new String[] { "cname", "multiverse" },
+								"cname LIKE ? AND csetrare LIKE ?",
+								new String[] { "%" + queryStr + "%",
+										"%" + setName + "%" }, null, null,
+								"cname", -1);
+					} else {
+						c = dbadapter.query("GathererCards",
+								new String[] { "cname", "multiverse" }, "cname LIKE ?",
+								new String[] { "%" + queryStr + "%" }, null,
+								null, "cname", -1);
+					}
 					if (c.getCount() > 0) {
 						c.moveToFirst();
 						while (true) {
-							Log.d(pid, "Got: " + c.getString(0));
+							Log.d(pid, "Got: " + c.getString(0) + ", " + c.getString(1));
 							arrList.add(c.getString(0));
+							arrMultiverseID.add(c.getString(1));
+							nvPair.add(c.getString(0),c.getString(1));
 							if (!c.moveToNext()) {
 								break;
 							}
@@ -268,7 +299,7 @@ public class MainActivity extends Activity {
 			LinearLayout infobar = (LinearLayout) findViewById(R.id.infoviewbar);
 			infobar.setVisibility(View.GONE);
 			if (res != null) {
-				if (res.equals("N/A")) {
+				if (res.equals("N/A") && !firstRun) {
 					infobar = (LinearLayout) findViewById(R.id.infoviewbar);
 					infobar.setVisibility(View.VISIBLE);
 					TextView infoTV = (TextView) findViewById(R.id.infotextview);
@@ -279,6 +310,8 @@ public class MainActivity extends Activity {
 							ct,
 							"Your search has returned no results.\nHave you entered correctly?",
 							Toast.LENGTH_LONG).show();
+				} else {
+					firstRun = false;
 				}
 			}
 			Collections.sort(arrList);
@@ -289,20 +322,20 @@ public class MainActivity extends Activity {
 
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		try {
-		if (requestCode == 1) {
+			if (requestCode == 1) {
 
-			// if (resultCode == RESULT_OK) {
+				// if (resultCode == RESULT_OK) {
 
-			// Toast.makeText(this, "Returned", Toast.LENGTH_SHORT).show();
-			// loadCards();
-			// }
-			//
-			// if (resultCode == RESULT_CANCELED) {
-			//
-			// // Write your code on no result return
-			//
-			// }
-		}
+				// Toast.makeText(this, "Returned", Toast.LENGTH_SHORT).show();
+				// loadCards();
+				// }
+				//
+				// if (resultCode == RESULT_CANCELED) {
+				//
+				// // Write your code on no result return
+				//
+				// }
+			}
 		} catch (Exception e) {
 			String toDebug = e.getMessage();
 			logC.write(toDebug);

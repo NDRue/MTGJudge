@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.ndrue.gathereroffline"
-    android:versionCode="1"
-    android:versionName="0.1" >
+    android:versionCode="4"
+    android:versionName="0.16" >
 
     <uses-sdk
         android:minSdkVersion="8"
@@ -16,6 +16,7 @@
 		android:launchMode="singleTask"
 		android:clearTaskOnLaunch="true" >
         <activity
+            android:configChanges="orientation|screenSize"
             android:name=".HomeScreen"
             android:label="@string/title_activity_main" >
             <intent-filter>
@@ -25,17 +26,20 @@
             </intent-filter>
         </activity>
         
-        <activity android:name="ExtraAddOns"></activity>
-        <activity android:name="MiscOptions"></activity>
-        <activity android:name="TournamentRules"></activity>
-        <activity android:name="InfractionPenalty"></activity>
-        <activity android:name="ComprehensiveRules"></activity>
-        <activity android:name="DisplayDetails"></activity>
-        <activity android:name="DecklistCounter"></activity>
-        <activity android:name="MainActivity"></activity>
-        <activity android:name="ImageOnly"></activity>
-        <activity android:name="InitCardData"></activity>
-        <activity android:name="ShowCardDetails"></activity>
+        <activity android:name="AddonDescription" android:configChanges="orientation|screenSize"></activity>
+        <activity android:name="AdvancedSearch" android:configChanges="orientation|screenSize"></activity>
+        <activity android:name="AdvancedSearchHome" android:configChanges="orientation|screenSize"></activity>
+        <activity android:name="ExtraAddOns" android:configChanges="orientation|screenSize"></activity>
+        <activity android:name="MiscOptions" android:configChanges="orientation|screenSize"></activity>
+        <activity android:name="TournamentRules" android:configChanges="orientation|screenSize"></activity>
+        <activity android:name="InfractionPenalty" android:configChanges="orientation|screenSize"></activity>
+        <activity android:name="ComprehensiveRules" android:configChanges="orientation|screenSize"></activity>
+        <activity android:name="DisplayDetails" android:configChanges="orientation|screenSize"></activity>
+        <activity android:name="DecklistCounter" android:configChanges="orientation|screenSize"></activity>
+        <activity android:name="MainActivity" android:configChanges="orientation|screenSize"></activity>
+        <activity android:name="ImageOnly" android:configChanges="orientation|screenSize"></activity>
+        <activity android:name="InitCardData" android:configChanges="orientation|screenSize"></activity>
+        <activity android:name="ShowCardDetails" android:configChanges="orientation|screenSize"></activity>
         </application>
 
 </manifest>
